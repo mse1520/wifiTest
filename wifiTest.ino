@@ -14,17 +14,10 @@ const int led = 2;
 
 void setup(void) {
   pinMode(led, OUTPUT);
-  digitalWrite(led, 1);
-  
+  digitalWrite(led, 1);  
   Serial.begin(2000000);
-
   setupAp();
-
-  server.on("/", handleRoot);
-  server.on("/save", handleSave);
-  server.onNotFound(handleNotFound);
-  server.begin();
-  Serial.println("HTTP server started");
+  serverRoute();
 }
 
 void setupAp() {
@@ -35,6 +28,16 @@ void setupAp() {
   delay(500); // Without delay I've seen the IP address blank
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
+}
+
+void serverRoute() {
+  server.on("/", handleRoot);
+  server.on("/save", HTTP_POST, handleSave);
+  server.on("/data", HTTP_GET, handleData);
+  server.on("/scan", HTTP_GET, handleScan);
+  server.onNotFound(handleNotFound);
+  server.begin();
+  Serial.println("HTTP server started");
 }
 
 void loop(void) {

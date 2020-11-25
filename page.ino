@@ -21,8 +21,8 @@ void handleRoot() {
       if(wifiS > 100) wifiS =100;
       if(wifiS >= 0){
         s += "<tr><td><a>" + WiFi.SSID(i) + "</a></td>";
-        s += "<td>" + String((WiFi.encryptionType(i) == ENC_TYPE_NONE)?"안잠금":"잠금") + "</td>"; 
-        s += "<td>" + wifiS + "%</td></tr>";
+        s += "<td>" + String((WiFi.encryptionType(i) == ENC_TYPE_NONE)?"Unlock":"Lock") + "</td>"; 
+        s += "<td>" + String(wifiS) + "%</td></tr>";
       }
     }
   } else {
@@ -45,6 +45,32 @@ void handleSave() {
   s += server.arg("ssid");
   s += server.arg("pass");
   server.send(200, "text/html", s);
+}
+
+void handleData() {
+  String s = "{\"sensor1\":\"message\",\"sensor\":123}";
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "text/plain", s);
+}
+
+void handleScan() {
+  int scan = WiFi.scanNetworks();
+  String s="[";
+  
+  for(int i=0; i<scan; i++) {
+    int wifiS = round(((WiFi.RSSI(i) + 90) / 60.0) * 100);
+    if(wifiS > 100) wifiS = 100;
+    if(wifiS >= 0) {
+      s += "{\"ssid\":\"" + WiFi.SSID(i) + "\",";
+      s += "\"lock\":" + String((WiFi.encryptionType(i) == ENC_TYPE_NONE)?"false":"true") + ",";
+      s += "\"signal\":\"" + String(wifiS) + "%\"}";
+      if(i == scan-1) s += "]";
+      else s += ",";
+    }
+  }
+  
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "text/plain", s);
 }
 
 void handleNotFound() {
