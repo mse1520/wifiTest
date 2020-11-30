@@ -27,7 +27,7 @@ const char inputPage[] PROGMEM = R"=====(
 
   <script>
     const getScanData = () => {
-      fetch('http://192.168.5.1/scan')
+      fetch('/scan')
         .then(response => response.json())
         .then(display)
         .catch(console.log);
@@ -73,7 +73,7 @@ const char inputPage[] PROGMEM = R"=====(
       formData.append('ssid', ssid);
       formData.append('pass', pass);
 
-      fetch('http://192.168.5.1/save', { method: 'post', body: formData })
+      fetch('/save', { method: 'post', body: formData })
         .then(response => response.text())
         .then(getSaveResult)
         .catch(alert);

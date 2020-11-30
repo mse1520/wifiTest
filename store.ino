@@ -14,19 +14,23 @@ bool writeConfig(String storeMsg) {
 bool readConfig() {
   bool result = false;
 
-  File readFile = SPIFFS.open("/store.json", "r");   
+  File readFile = SPIFFS.open("/store.json", "r");  
   if (readFile) {
     String storeFile = readFile.readStringUntil('}') + "}";
-    
-    StaticJsonDocument<200> doc;
+
+    StaticJsonDocument<500> doc;
     DeserializationError Error = deserializeJson(doc, storeFile);
     if(!Error) {
-      stat_ssid = doc["ssid"];
-      stat_pass = doc["pass"];
-      Serial.println(storeFile);
-      Serial.println(ssid);
-      Serial.println(pass);
-      result = true; 
+      stat_ssid = doc["ssid"].as<String>();
+      stat_pass = doc["pass"].as<String>();
+
+      for(int i=0; i<4; i++) {
+        stat_ip[i] = doc["ip"][i].as<int>();
+        stat_gateway[i] = doc["gateway"][i].as<int>();
+        stat_netMsk[i] = doc["netMsk"][i].as<int>();
+      }
+
+      result = true;
     }
     
     readFile.close();

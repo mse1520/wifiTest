@@ -10,7 +10,7 @@ IPAddress apIP(192, 168, 5, 1);
 IPAddress netMsk(255, 255, 255, 0);
 
 String stat_ssid="", stat_pass="";
-String statIp="", statGateway="", statNetMsk="";
+int stat_ip[4], stat_gateway[4], stat_netMsk[4];
 const int led = 2;
 bool statMode = false;
 
@@ -45,11 +45,23 @@ void setupAp() {
 void setupStation() {
   Serial.print("STA: ");  
   WiFi.mode(WIFI_STA);
-//  String statIp, String statGateway, String statNetMsk
-//  IPAddress ip(192, 168, 0, 101);
-//  IPAddress gateway(117, 16, 177, 126);
-//  IPAddress netMsk(255, 255, 255, 0);
-//  WiFi.config(ip, gateway, subnet);
+
+  bool ipCheck = true;
+  for(int i=0; i<4; i++) {
+    if (isnan(stat_ip[i]) || isnan(stat_gateway[i]) || isnan(stat_netMsk[i])) {
+      ipCheck = false;
+      break; 
+    }
+  }
+  
+  if(ipCheck) {
+    Serial.println("test");
+    IPAddress ip(stat_ip[0], stat_ip[1], stat_ip[2], stat_ip[3]);
+    IPAddress gateway(stat_gateway[0], stat_gateway[1], stat_gateway[2], stat_gateway[3]);
+    IPAddress netMsk(stat_netMsk[0], stat_netMsk[1], stat_netMsk[2], stat_netMsk[3]);
+    WiFi.config(ip, gateway, netMsk);
+  }
+  
   WiFi.begin(stat_ssid, stat_pass);
 
   int count = 0;
@@ -57,17 +69,24 @@ void setupStation() {
     delay(500);
     Serial.print(".");
     count++;
-    if(count > 60) break; 
+    if(count > 60) break;
   }
-  if(WiFi.status() != )
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+
+  if(WiFi.status() != WL_CONNECTED) {
+    SPIFFS.remove("/store.json");
+    ESP.reset();
+  }
+  else {
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
 }
 
 void serverRoute() {
   server.on("/", handleRoot);
+  server.on("/setIp", HTTP_GET, handleSetIp);
   server.on("/save", HTTP_GET, handleInputPage);
   server.on("/save", HTTP_POST, handleSave);
   server.on("/read", HTTP_GET, handleRead);

@@ -12,12 +12,28 @@ void handleSave() {
     String storeMsg = "{\"ssid\":\"" + ssid + "\",\"pass\":\"" + pass + "\"}";
     bool writeResult = writeConfig(storeMsg);
     if(writeResult) s = "success";
-    Serial.println(ssid);
-    Serial.println(pass);
   }
   
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plain", s);
+
+//  if(s == "success") ESP.reset();
+}
+
+void handleSetIp() {
+  String ip = server.arg("ip");
+  String gateway = server.arg("gateway");
+  String netMsk = server.arg("netMsk");
+  String result = "failure";
+
+  if (ip != "" && gateway != "" && netMsk != "" && stat_ssid != "" && stat_pass != "") {
+    String storeMsg = "{\"ssid\":\"" + stat_ssid + "\",\"pass\":\"" + stat_pass + "\",";
+    storeMsg += "\"ip\":" + ip + ",\"gateway\":" + gateway + ",\"netMsk\":" + netMsk + "}";
+    bool writeResult = writeConfig(storeMsg);
+    if(writeResult) result = "success";
+  }
+  
+  server.send(200, "text/plain", result);
 }
 
 void handleRead() {
@@ -29,7 +45,8 @@ void handleRead() {
 
 void handleClear() {
   String s = "test";
-  SPIFFS.format();
+  SPIFFS.remove("/store.json");
+//  SPIFFS.format();
   server.send(200, "text/plain", s);
 }
 
@@ -60,7 +77,6 @@ void handleScan() {
 }
 
 void handleNotFound() {
-  digitalWrite(led, 1);
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -73,5 +89,4 @@ void handleNotFound() {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
-  digitalWrite(led, 0);
 }
