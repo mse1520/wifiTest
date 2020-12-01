@@ -2,25 +2,41 @@
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
 #include <FS.h>
+#include <DHT.h>
+#include <SimpleTimer.h>
 
-/* Set these to your desired credentials. */
+SimpleTimer timer;
+
+#define LED D4
+#define DHTPIN D3
+//#define DHTTYPE DHT11   // DHT 11
+//#define DHTTYPE DHT21   // DHT 21
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+
+/* AP */
 const String softAP_ssid = "ap_smartfinder_sensor";
 const String softAP_password = "00000000";
 IPAddress apIP(192, 168, 5, 1);
 IPAddress netMsk(255, 255, 255, 0);
 
+/* Station */
 String stat_ssid="", stat_pass="";
 int stat_ip[4], stat_gateway[4], stat_netMsk[4];
-const int led = 2;
-bool statMode = false;
+
+/* Sensor */
+DHT dht(DHTPIN, DHTTYPE);
+float hum, temC, temF, hiF, hiC;
 
 ESP8266WebServer server(80);
 
 void setup(void) {
-  pinMode(led, OUTPUT);
-  digitalWrite(led, 1);
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, 1);
   Serial.begin(2000000);
   SPIFFS.begin();
+  dht.begin();
+
+  timer.setInterval(2000, getDht);
   
   bool readMode = readConfig();
   if(readMode) 
@@ -29,6 +45,37 @@ void setup(void) {
     setupAp();
   
   serverRoute();
+}
+
+void getDht() {
+  hum = dht.readHumidity();
+  temC = dht.readTemperature();
+  temF = dht.readTemperature(true);
+
+  if (isnan(hum) || isnan(temC) || isnan(temF)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+  }
+  else {
+    // 체감온도
+    hiF = dht.computeHeatIndex(temF, hum);
+    hiC = dht.computeHeatIndex(temC, hum, false);
+
+//    Serial.print(F("Humidity: "));
+//    Serial.print(hum);
+//    Serial.println(F("%"));
+//    
+//    Serial.print(F("Temperature: "));
+//    Serial.print(temC);
+//    Serial.print(F("°C, "));
+//    Serial.print(temF);
+//    Serial.println(F("°F"));
+//    
+//    Serial.print(F("Heat index: "));
+//    Serial.print(hiC);
+//    Serial.print(F("°C, "));
+//    Serial.print(hiF);
+//    Serial.println(F("°F")); 
+  }
 }
 
 void setupAp() {
@@ -55,7 +102,6 @@ void setupStation() {
   }
   
   if(ipCheck) {
-    Serial.println("test");
     IPAddress ip(stat_ip[0], stat_ip[1], stat_ip[2], stat_ip[3]);
     IPAddress gateway(stat_gateway[0], stat_gateway[1], stat_gateway[2], stat_gateway[3]);
     IPAddress netMsk(stat_netMsk[0], stat_netMsk[1], stat_netMsk[2], stat_netMsk[3]);
@@ -100,4 +146,5 @@ void serverRoute() {
 
 void loop(void) {
   server.handleClient();
+  timer.run();
 }

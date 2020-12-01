@@ -51,7 +51,14 @@ void handleClear() {
 }
 
 void handleData() {
-  String s = "{\"sensor1\":\"message\",\"sensor\":123}";
+  String s = "[";
+  s += "{\"sensor\":\"Humidity\",\"data\":" + String(hum) + "},";
+  s += "{\"sensor\":\"Celsius\",\"data\":" + String(temC) +"},";
+  s += "{\"sensor\":\"Fahrenheit\",\"data\":" + String(temF) +"},";
+  s += "{\"sensor\":\"Perceived Celsius\",\"data\":" + String(hiC) +"},";
+  s += "{\"sensor\":\"Perceived Fahrenheit\",\"data\":" + String(hiF) +"}";
+  s += "]";
+  
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plain", s);
 }
