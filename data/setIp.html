@@ -17,10 +17,10 @@
 </head>
 
 <body>
-    <form action='/save' method='get' onsubmit='onClickSetIp(event)'>
+    <form action='/save' method='POST' onsubmit='onClickSetIp(event)'>
         <p><input type='text' id='inputIp' name='ip' placeholder='IP'></p>
-        <p><input type='password' id='inputGateway' name='gateway' placeholder='Gateway'></p>
-        <p><input type='password' id='inputNetMsk' name='netMsk' placeholder='Subnet Mask'></p>
+        <p><input type='text' id='inputGateway' name='gateway' placeholder='Gateway'></p>
+        <p><input type='text' id='inputNetMsk' name='netMsk' placeholder='Subnet Mask'></p>
         <input type='submit' value='저장'>
     </form>
 
@@ -28,23 +28,34 @@
         const onClickSetIp = e => {
             e.preventDefault();
 
-            const ip = document.querySelector('#inputIp').value;
-            const gateway = document.querySelector('#inputGateway').value;
-            const netMsk = document.querySelector('#inputNetMsk').value;
+            const ip = JSON.stringify(
+                document.querySelector('#inputIp').value
+                    .split('.')
+                    .map((value, index) => value * 1)
+            );
+            const gateway = JSON.stringify(
+                document.querySelector('#inputGateway').value
+                    .split('.')
+                    .map((value, index) => value * 1)
+            );
+            const netMsk = JSON.stringify(
+                document.querySelector('#inputNetMsk').value
+                    .split('.')
+                    .map((value, index) => value * 1)
+            );
 
             const formData = new FormData();
             formData.append('ip', ip);
             formData.append('gateway', gateway);
             formData.append('netMsk', netMsk);
 
-            fetch('http://192.168.100.43/setIp', { method: 'get', body: formData })
+            fetch('http://192.168.100.43/setIp', { method: 'post', body: formData })
                 .then(response => response.text())
                 .then(getSetIpResult)
                 .catch(console.log);
         };
 
         const getSetIpResult = data => {
-            console.log(data);
             if (data === 'success')
                 alert('입력값이 저장되었습니다');
             else

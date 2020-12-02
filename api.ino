@@ -1,8 +1,3 @@
-void handleRoot() {
-  String s = "test"; 
-  server.send(200, "text/html", s);
-}
-
 void handleSave() {
   String ssid = server.arg("ssid");
   String pass = server.arg("pass");
@@ -32,7 +27,8 @@ void handleSetIp() {
     bool writeResult = writeConfig(storeMsg);
     if(writeResult) result = "success";
   }
-  
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plain", result);
 }
 
@@ -44,7 +40,7 @@ void handleRead() {
 }
 
 void handleClear() {
-  String s = "test";
+  String s = "clear";
   SPIFFS.remove("/store.json");
 //  SPIFFS.format();
   server.send(200, "text/plain", s);
@@ -56,7 +52,11 @@ void handleData() {
   s += "{\"sensor\":\"Celsius\",\"data\":" + String(temC) +"},";
   s += "{\"sensor\":\"Fahrenheit\",\"data\":" + String(temF) +"},";
   s += "{\"sensor\":\"Perceived Celsius\",\"data\":" + String(hiC) +"},";
-  s += "{\"sensor\":\"Perceived Fahrenheit\",\"data\":" + String(hiF) +"}";
+  s += "{\"sensor\":\"Perceived Fahrenheit\",\"data\":" + String(hiF) +"},";
+  
+  s += "{\"sensor\":\"pm1.0\",\"data\":" + String(pm10) +"},";
+  s += "{\"sensor\":\"pm2.5\",\"data\":" + String(pm25) +"},";
+  s += "{\"sensor\":\"pm10\",\"data\":" + String(pm100) +"}";
   s += "]";
   
   server.sendHeader("Access-Control-Allow-Origin", "*");

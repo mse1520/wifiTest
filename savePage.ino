@@ -1,4 +1,4 @@
-const char inputPage[] PROGMEM = R"=====(
+const char savePage[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html lang='ko'>
 <head>
@@ -90,6 +90,6 @@ const char inputPage[] PROGMEM = R"=====(
 </html>
 )=====";
 
-void handleInputPage() {
-  server.send(200, "text/html", inputPage);
+void handleSavePage() {
+  server.send(200, "text/html", savePage);
 }

@@ -13,7 +13,9 @@
 </head>
 
 <body>
-    <div id="root"></div>
+    <a href='/save'>WIFI 설정</a>
+    <a href='/ip'>IP 설정</a>
+    <div id='root'></div>
 
     <script>
         const getData = () => {
@@ -37,6 +39,7 @@
             clearInterval(scanInterval);
         });
 
+        getData();
         const scanInterval = setInterval(() => getData(), 2000);
     </script>
 </body>

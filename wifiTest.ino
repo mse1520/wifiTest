@@ -4,6 +4,7 @@
 #include <FS.h>
 #include <DHT.h>
 #include <SimpleTimer.h>
+#include <pm2008_i2c.h>
 
 SimpleTimer timer;
 
@@ -25,19 +26,25 @@ int stat_ip[4], stat_gateway[4], stat_netMsk[4];
 
 /* Sensor */
 DHT dht(DHTPIN, DHTTYPE);
+PM2008_I2C pm2008_i2c;
 float hum, temC, temF, hiF, hiC;
+int pm10, pm25, pm100;
 
 ESP8266WebServer server(80);
 
 void setup(void) {
   pinMode(LED, OUTPUT);
   digitalWrite(LED, 1);
-  Serial.begin(2000000);
-  SPIFFS.begin();
-  dht.begin();
-
-  timer.setInterval(2000, getDht);
   
+  Serial.begin(2000000);
+  
+  dht.begin();
+  pm2008_i2c.begin();
+  pm2008_i2c.command();
+
+  timer.setInterval(2000, runSensor);
+
+  SPIFFS.begin();
   bool readMode = readConfig();
   if(readMode) 
     setupStation();
@@ -45,37 +52,6 @@ void setup(void) {
     setupAp();
   
   serverRoute();
-}
-
-void getDht() {
-  hum = dht.readHumidity();
-  temC = dht.readTemperature();
-  temF = dht.readTemperature(true);
-
-  if (isnan(hum) || isnan(temC) || isnan(temF)) {
-    Serial.println(F("Failed to read from DHT sensor!"));
-  }
-  else {
-    // 체감온도
-    hiF = dht.computeHeatIndex(temF, hum);
-    hiC = dht.computeHeatIndex(temC, hum, false);
-
-//    Serial.print(F("Humidity: "));
-//    Serial.print(hum);
-//    Serial.println(F("%"));
-//    
-//    Serial.print(F("Temperature: "));
-//    Serial.print(temC);
-//    Serial.print(F("°C, "));
-//    Serial.print(temF);
-//    Serial.println(F("°F"));
-//    
-//    Serial.print(F("Heat index: "));
-//    Serial.print(hiC);
-//    Serial.print(F("°C, "));
-//    Serial.print(hiF);
-//    Serial.println(F("°F")); 
-  }
 }
 
 void setupAp() {
@@ -87,6 +63,13 @@ void setupAp() {
   delay(500); // Without delay I've seen the IP address blank
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
+
+  for(int i=0; i<3; i++) {
+    digitalWrite(LED, 0);
+    delay(500);
+    digitalWrite(LED, 1);
+    delay(500);
+  }
 }
 
 void setupStation() {
@@ -127,13 +110,21 @@ void setupStation() {
     Serial.println("WiFi connected");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    
+    for(int i=0; i<5; i++) {
+      digitalWrite(LED, 0);
+      delay(500);
+      digitalWrite(LED, 1);
+      delay(500);
+    }
   }
 }
 
 void serverRoute() {
-  server.on("/", handleRoot);
-  server.on("/setIp", HTTP_GET, handleSetIp);
-  server.on("/save", HTTP_GET, handleInputPage);
+  server.on("/", handleMainPage);
+  server.on("/setIp", HTTP_GET, handleSetIpPage);
+  server.on("/setIp", HTTP_POST, handleSetIp);
+  server.on("/save", HTTP_GET, handleSavePage);
   server.on("/save", HTTP_POST, handleSave);
   server.on("/read", HTTP_GET, handleRead);
   server.on("/data", HTTP_GET, handleData);
