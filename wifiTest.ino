@@ -2,9 +2,10 @@
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
 #include <FS.h>
-#include <DHT.h>
 #include <SimpleTimer.h>
+#include <DHT.h>
 #include <pm2008_i2c.h>
+#include <LiquidCrystal_I2C.h>
 
 SimpleTimer timer;
 
@@ -30,6 +31,9 @@ PM2008_I2C pm2008_i2c;
 float hum, temC, temF, hiF, hiC;
 int pm10, pm25, pm100;
 
+int lcdIndex = 0;
+
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 ESP8266WebServer server(80);
 
 void setup(void) {
@@ -41,8 +45,12 @@ void setup(void) {
   dht.begin();
   pm2008_i2c.begin();
   pm2008_i2c.command();
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
 
   timer.setInterval(2000, runSensor);
+  timer.setInterval(2000, lcdDisplay);
 
   SPIFFS.begin();
   bool readMode = readConfig();
@@ -63,6 +71,8 @@ void setupAp() {
   delay(500); // Without delay I've seen the IP address blank
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
+  lcd.setCursor(0, 0);
+  lcd.print(WiFi.softAPIP());
 
   for(int i=0; i<3; i++) {
     digitalWrite(LED, 0);
@@ -110,6 +120,8 @@ void setupStation() {
     Serial.println("WiFi connected");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    lcd.setCursor(0, 0);
+    lcd.print(WiFi.localIP());
     
     for(int i=0; i<5; i++) {
       digitalWrite(LED, 0);
