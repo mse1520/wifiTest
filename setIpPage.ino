@@ -48,7 +48,7 @@ const char setIpPage[] PROGMEM = R"=====(
       formData.append('gateway', gateway);
       formData.append('netMsk', netMsk);
 
-      fetch('http://192.168.100.43/setIp', { method: 'post', body: formData })
+      fetch('/setIp', { method: 'post', body: formData })
         .then(response => response.text())
         .then(getSetIpResult)
         .catch(console.log);
